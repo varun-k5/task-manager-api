@@ -3,6 +3,7 @@ const User=require('../models/user')
 const auth=require('../middleware/auth')
 const router=new express.Router()
 const multer=require('multer')
+const sharp=require('sharp')
 
 router.post('/users', async (req,res)=>{
     const user=new User(req.body)
@@ -136,7 +137,9 @@ const upload=multer({
 })
 
 router.post('/users/me/avatar',auth, upload.single('avatar'), async (req, res)=>{
-    req.user.avatar=req.file.buffer
+    const buffer = await sharp(req.file.buffer).resize({width:250, height: 250}).png().toBuffer()
+    req.user.avatar=buffer
+    //req.user.avatar=req.file.buffer
     await req.user.save()
     res.send()
 },(error,req,res,next)=>{
@@ -157,7 +160,7 @@ router.get('/users/:id/avatar', async (req, res)=>{//Not added in postman
             throw new error()
         }
 
-        res.set('Content-Type', 'image/jpg')//to set the header
+        res.set('Content-Type', 'image/png')//to set the header
         res.send(user.avatar)
     } catch(e) {
         res.status(404).send()
